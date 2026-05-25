@@ -1,0 +1,92 @@
+name: CI/CD Pipeline - AI Smart Shoe Inventory (Tukupatu)
+
+on:
+  push:
+    branches: [ "main", "staging" ]
+  pull_request:
+    branches: [ "main", "staging" ]
+
+jobs:
+  # ================= TAHAP CI (CONTINUOUS INTEGRATION) =================
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    # Setup database MySQL otomatis untuk Unit Testing database toko sepatu
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: db_shoe_inventory
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 1. Setup Lingkungan Java (Sesuai dengan pom.xml kamu yang memakai Java 25)
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: maven
+
+      # 2. Otomatisasi Testing Menggunakan Maven
+      - name: Run Java Unit Tests & AI Validation
+        env:
+          DB_URL: jdbc:mysql://localhost:3306/db_shoe_inventory
+          DB_USER: root
+          DB_PASSWORD: root
+        run: |
+          echo "Running unit tests for JavaFX App & AI Integration..."
+          mvn test
+
+      # 3. Security Gate (Mendeteksi celah keamanan kode & library API)
+      - name: Run Security Scan (Trivy)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          ignore-unfixed: true
+          format: 'table'
+          severity: 'HIGH,CRITICAL'
+
+      # 4. Build Desktop Application Artifact (.jar)
+      - name: Build Application Package
+        run: |
+          echo "Building JavaFX desktop artifact (.jar)..."
+          mvn clean package -DskipTests
+
+  # ================= TAHAP CD (CONTINUOUS DEPLOYMENT) =================
+  deploy-staging:
+    needs: build-and-test
+    if: github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Deploy to Staging Environment
+        run: |
+          echo "Deploying AI Shoe Inventory to internal Staging Server..."
+
+  deploy-uat:
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # Manual Gate: Memerlukan tombol 'Approve' dari kamu/tim di GitHub sebelum lanjut
+    environment: uat
+    steps:
+      - name: Deploy to UAT Environment
+        run: |
+          echo "Deploying to UAT for Business Simulation (Stok & Chatbot Validation)..."
+
+  deploy-production:
+    needs: deploy-uat
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Deploy to Live Production
+        run: |
+          echo "System is live. Integrated with Tukupatu API and Live MySQL Database."
