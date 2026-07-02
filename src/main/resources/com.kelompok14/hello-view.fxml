@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.TextField?> <VBox alignment="CENTER" spacing="20.0" xmlns:fx="http://javafx.com/fxml"
+                                                fx:controller="com.kelompok14.DashboardController">
+    <padding>
+        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
+    </padding>
+
+    <TextField fx:id="inputUkuranSepatu" promptText="Masukkan ukuran sepatu (contoh: 39)"/>
+
+    <Button text="Tanya AI" onAction="#klikTombolTanyaAi"/>
+
+    <Label fx:id="labelHasilAi" text="Hasil analisis akan muncul di sini"/>
+</VBox>
